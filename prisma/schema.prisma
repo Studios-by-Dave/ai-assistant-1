@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  businessName String
+  googleTokens String?
+  hubspotToken String?
+  settings     Json?
+  emails       Email[]
+  leads        Lead[]
+  actions      Action[]
+  auditLogs    AuditLog[]
+  createdAt    DateTime @default(now())
+}
+
+model Email {
+  id           String   @id @default(cuid())
+  userId       String
+  gmailId      String   @unique
+  from         String
+  to           String?
+  subject      String
+  body         String   @db.Text
+  urgencyScore Int
+  category     String
+  intent       String?
+  aiSummary    String?
+  status       String   @default("pending")
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model Lead {
+  id            String   @id @default(cuid())
+  userId        String
+  email         String
+  name          String
+  source        String
+  hubspotId     String?
+  lastContact   DateTime
+  dealValue     Float?
+  status        String   @default("stale")
+  followUpCount Int      @default(0)
+  category      String?
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model Action {
+  id           String    @id @default(cuid())
+  userId       String
+  type         String
+  payload      Json
+  aiConfidence Float
+  status       String    @default("pending_approval")
+  executedAt   DateTime?
+  category     String?
+  user         User      @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  details   Json
+  ipAddress String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
